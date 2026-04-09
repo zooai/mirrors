@@ -1,0 +1,75 @@
+name: mirror
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  mirror:
+    runs-on: zoo-build-linux-amd64
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - src: billing
+            dst: billing
+          - src: commerce
+            dst: commerce
+          - src: console
+            dst: console
+          - src: cloud-site
+            dst: cloud
+          - src: cloud
+            dst: cloud-api
+          - src: ingress
+            dst: ingress
+          - src: id
+            dst: id
+          - src: insights
+            dst: insights
+          - src: iam
+            dst: iam
+          - src: kms
+            dst: kms
+    steps:
+      - name: Install crane
+        run: |
+          set -e
+          mkdir -p "$HOME/bin"
+          URL="https://github.com/google/go-containerregistry/releases/download/v0.20.2/go-containerregistry_Linux_x86_64.tar.gz"
+          if ! [ -x "$HOME/bin/crane" ]; then
+            for i in 1 2 3 4 5; do
+              if curl -fsSL --retry 5 --retry-delay 3 --retry-all-errors "$URL" -o /tmp/crane.tgz; then
+                tar -xzf /tmp/crane.tgz -C "$HOME/bin" crane
+                chmod +x "$HOME/bin/crane"
+                break
+              fi
+              echo "Attempt $i failed, sleeping $((i*5))s"
+              sleep $((i*5))
+            done
+          fi
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+          "$HOME/bin/crane" version
+
+      - name: Login to ghcr.io (one cred for both orgs)
+        env:
+          HANZOAI_PULL_TOKEN: ${{ secrets.HANZOAI_PULL_TOKEN }}
+        run: |
+          echo "$HANZOAI_PULL_TOKEN" | crane auth login ghcr.io -u hanzo-dev --password-stdin
+
+      - name: Mirror ${{ matrix.src }} -> ${{ matrix.dst }} (multi-arch)
+        run: |
+          SRC="ghcr.io/hanzoai/${{ matrix.src }}:latest"
+          DST="ghcr.io/zooai/${{ matrix.dst }}:latest"
+          echo "Mirroring $SRC -> $DST (all archs)"
+          crane copy "$SRC" "$DST"
+
+      - name: Verify
+        run: |
+          crane digest "ghcr.io/zooai/${{ matrix.dst }}:latest"
+          crane manifest "ghcr.io/zooai/${{ matrix.dst }}:latest" | head -40
