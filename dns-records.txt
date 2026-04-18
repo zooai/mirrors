@@ -1,0 +1,16 @@
+# Cloudflare DNS records needed for Zoo Cloud
+# Zone: zoo.cloud (add via Cloudflare dashboard or API token with Zone:DNS:Edit scope)
+# Target: Zoo DOKS ingress (zoo-system/zoo-ingress LoadBalancer)
+# IPv4: 209.38.118.103
+# IPv6: 2604:a880:4:1d0:0:2:9994:3000
+#
+# Add via Cloudflare dashboard or API token:
+
+A     zoo.cloud           209.38.118.103              proxied=true
+A     *.zoo.cloud         209.38.118.103              proxied=true
+AAAA  zoo.cloud           2604:a880:4:1d0:0:2:9994:3000  proxied=true
+AAAA  *.zoo.cloud         2604:a880:4:1d0:0:2:9994:3000  proxied=true
+
+# Verify after adding:
+#   dig +short zoo.cloud A
+#   curl -I https://zoo.cloud
