@@ -1,5 +1,7 @@
 # zooai/mirrors
 
+[![Open in Hanzo](https://hanzo.app/badges/open-in-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/zooai/mirrors&ref=main&action=open) [![Edit with Hanzo](https://hanzo.app/badges/edit-with-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/zooai/mirrors&ref=main&action=edit)
+
 Image mirror from `ghcr.io/hanzoai/*` to `ghcr.io/zooai/*`.
 
 ## Workflow
